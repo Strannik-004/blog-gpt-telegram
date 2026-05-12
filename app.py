@@ -1,6 +1,5 @@
 import os
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Request
 from openai import OpenAI
 
 app = FastAPI()
@@ -8,9 +7,6 @@ app = FastAPI()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
-
-class Topic(BaseModel):
-    topic: str
 
 
 def generate_post(topic):
@@ -50,11 +46,18 @@ async def heartbeat():
 
 
 @app.post("/generate-post")
-async def generate_post_api(data: Topic):
+async def generate_post_api(request: Request):
 
-    post = generate_post(data.topic)
+    body = await request.json()
+
+    topic = body.get("topic")
+
+    if not topic:
+        topic = "Искусственный интеллект в бизнесе"
+
+    post = generate_post(topic)
 
     return {
-        "topic": data.topic,
+        "topic": topic,
         "post": post
     }
